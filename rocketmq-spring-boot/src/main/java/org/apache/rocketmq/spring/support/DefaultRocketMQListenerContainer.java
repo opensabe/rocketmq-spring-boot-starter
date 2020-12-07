@@ -34,6 +34,8 @@ import org.apache.rocketmq.client.consumer.listener.MessageListenerConcurrently;
 import org.apache.rocketmq.client.consumer.listener.MessageListenerOrderly;
 import org.apache.rocketmq.client.consumer.rebalance.AllocateMessageQueueAveragely;
 import org.apache.rocketmq.client.exception.MQClientException;
+import org.apache.rocketmq.common.UtilAll;
+import org.apache.rocketmq.common.consumer.ConsumeFromWhere;
 import org.apache.rocketmq.common.message.MessageExt;
 import org.apache.rocketmq.remoting.RPCHook;
 import org.apache.rocketmq.spring.annotation.ConsumeMode;
@@ -109,6 +111,8 @@ public class DefaultRocketMQListenerContainer implements InitializingBean,
     private String selectorExpression;
     private MessageModel messageModel;
     private long consumeTimeout;
+    private ConsumeFromWhere consumeFromWhere;
+    private long consumeFromSecondsAgo;
 
     public long getSuspendCurrentQueueTimeMillis() {
         return suspendCurrentQueueTimeMillis;
@@ -170,6 +174,22 @@ public class DefaultRocketMQListenerContainer implements InitializingBean,
         this.charset = charset;
     }
 
+    public ConsumeFromWhere getConsumeFromWhere() {
+        return consumeFromWhere;
+    }
+
+    public void setConsumeFromWhere(ConsumeFromWhere consumeFromWhere) {
+        this.consumeFromWhere = consumeFromWhere;
+    }
+
+    public long getConsumeFromSecondsAgo() {
+        return consumeFromSecondsAgo;
+    }
+
+    public void setConsumeFromSecondsAgo(long consumeTimestamp) {
+        this.consumeFromSecondsAgo = consumeTimestamp;
+    }
+
     @Deprecated
     public ObjectMapper getObjectMapper() {
         return objectMapper;
@@ -210,6 +230,8 @@ public class DefaultRocketMQListenerContainer implements InitializingBean,
         this.selectorExpression = anno.selectorExpression();
         this.selectorType = anno.selectorType();
         this.consumeTimeout = anno.consumeTimeout();
+        this.consumeFromWhere = anno.consumeFromWhere();
+        this.consumeFromSecondsAgo = anno.consumeFromSecondsAgo();
     }
 
     public ConsumeMode getConsumeMode() {
@@ -502,6 +524,11 @@ public class DefaultRocketMQListenerContainer implements InitializingBean,
                 break;
             default:
                 throw new IllegalArgumentException("Property 'consumeMode' was wrong.");
+        }
+
+        if (this.consumeFromWhere.equals(ConsumeFromWhere.CONSUME_FROM_TIMESTAMP)) {
+            consumer.setConsumeFromWhere(ConsumeFromWhere.CONSUME_FROM_TIMESTAMP);
+            consumer.setConsumeTimestamp(UtilAll.timeMillisToHumanString3(System.currentTimeMillis() - (1000 * this.consumeFromSecondsAgo)));
         }
 
         if (rocketMQListener instanceof RocketMQPushConsumerLifecycleListener) {

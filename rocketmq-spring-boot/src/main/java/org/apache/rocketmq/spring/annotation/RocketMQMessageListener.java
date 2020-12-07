@@ -17,6 +17,8 @@
 
 package org.apache.rocketmq.spring.annotation;
 
+import org.apache.rocketmq.common.consumer.ConsumeFromWhere;
+
 import java.lang.annotation.Documented;
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
@@ -74,6 +76,18 @@ public @interface RocketMQMessageListener {
      * Max consumer thread number.
      */
     int consumeThreadMax() default 64;
+
+    /**
+     *
+     * @return
+     */
+    ConsumeFromWhere consumeFromWhere() default ConsumeFromWhere.CONSUME_FROM_LAST_OFFSET;
+
+    /**
+     * 如果指定了为ConsumeFromWhere.CONSUME_FROM_TIMESTAMP，指定从几秒前的消息开始消费. 默认10s
+     * @return
+     */
+    long consumeFromSecondsAgo() default 10;
 
     /**
      * Max consumer timeout, default 30s.
