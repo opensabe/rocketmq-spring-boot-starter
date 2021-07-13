@@ -529,6 +529,8 @@ public class DefaultRocketMQListenerContainer implements InitializingBean,
         if (this.consumeFromWhere.equals(ConsumeFromWhere.CONSUME_FROM_TIMESTAMP)) {
             consumer.setConsumeFromWhere(ConsumeFromWhere.CONSUME_FROM_TIMESTAMP);
             consumer.setConsumeTimestamp(UtilAll.timeMillisToHumanString3(System.currentTimeMillis() - (1000 * this.consumeFromSecondsAgo)));
+        } else {
+            consumer.setConsumeFromWhere(consumeFromWhere);
         }
 
         if (rocketMQListener instanceof RocketMQPushConsumerLifecycleListener) {
