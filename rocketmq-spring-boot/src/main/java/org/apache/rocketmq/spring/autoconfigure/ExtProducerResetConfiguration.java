@@ -18,18 +18,17 @@
 package org.apache.rocketmq.spring.autoconfigure;
 
 import java.util.Map;
-import java.util.Objects;
-
-import org.apache.rocketmq.acl.common.AclClientRPCHook;
-import org.apache.rocketmq.acl.common.SessionCredentials;
+import java.util.stream.Collectors;
 import org.apache.rocketmq.client.exception.MQClientException;
 import org.apache.rocketmq.client.producer.DefaultMQProducer;
 import org.apache.rocketmq.spring.annotation.ExtRocketMQTemplateConfiguration;
 import org.apache.rocketmq.spring.core.RocketMQTemplate;
 import org.apache.rocketmq.spring.support.RocketMQMessageConverter;
+import org.apache.rocketmq.spring.support.RocketMQUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.aop.framework.AopProxyUtils;
+import org.springframework.aop.scope.ScopedProxyUtils;
 import org.springframework.beans.BeansException;
 import org.springframework.beans.factory.SmartInitializingSingleton;
 import org.springframework.beans.factory.support.BeanDefinitionValidationException;
@@ -41,8 +40,6 @@ import org.springframework.context.support.GenericApplicationContext;
 import org.springframework.core.env.StandardEnvironment;
 import org.springframework.util.StringUtils;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-
 @Configuration
 public class ExtProducerResetConfiguration implements ApplicationContextAware, SmartInitializingSingleton {
     private final static Logger log = LoggerFactory.getLogger(ExtProducerResetConfiguration.class);
@@ -53,30 +50,27 @@ public class ExtProducerResetConfiguration implements ApplicationContextAware, S
 
     private RocketMQProperties rocketMQProperties;
 
-    private ObjectMapper objectMapper;
     private RocketMQMessageConverter rocketMQMessageConverter;
 
-    public ExtProducerResetConfiguration(ObjectMapper rocketMQMessageObjectMapper,
-        RocketMQMessageConverter rocketMQMessageConverter,
+    public ExtProducerResetConfiguration(RocketMQMessageConverter rocketMQMessageConverter,
         StandardEnvironment environment, RocketMQProperties rocketMQProperties) {
         this.rocketMQMessageConverter = rocketMQMessageConverter;
-        this.objectMapper = rocketMQMessageObjectMapper;
         this.environment = environment;
         this.rocketMQProperties = rocketMQProperties;
     }
 
     @Override
     public void setApplicationContext(ApplicationContext applicationContext) throws BeansException {
-        this.applicationContext = (ConfigurableApplicationContext)applicationContext;
+        this.applicationContext = (ConfigurableApplicationContext) applicationContext;
     }
 
     @Override
     public void afterSingletonsInstantiated() {
-        Map<String, Object> beans = this.applicationContext.getBeansWithAnnotation(ExtRocketMQTemplateConfiguration.class);
+        Map<String, Object> beans = this.applicationContext.getBeansWithAnnotation(ExtRocketMQTemplateConfiguration.class)
+            .entrySet().stream().filter(entry -> !ScopedProxyUtils.isScopedTarget(entry.getKey()))
+            .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
 
-        if (Objects.nonNull(beans)) {
-            beans.forEach(this::registerTemplate);
-        }
+        beans.forEach(this::registerTemplate);
     }
 
     private void registerTemplate(String beanName, Object bean) {
@@ -87,7 +81,7 @@ public class ExtProducerResetConfiguration implements ApplicationContextAware, S
         }
 
         ExtRocketMQTemplateConfiguration annotation = clazz.getAnnotation(ExtRocketMQTemplateConfiguration.class);
-        GenericApplicationContext genericApplicationContext = (GenericApplicationContext)applicationContext;
+        GenericApplicationContext genericApplicationContext = (GenericApplicationContext) applicationContext;
         validate(annotation, genericApplicationContext);
 
         DefaultMQProducer mqProducer = createProducer(annotation);
@@ -99,15 +93,13 @@ public class ExtProducerResetConfiguration implements ApplicationContextAware, S
             throw new BeanDefinitionValidationException(String.format("Failed to startup MQProducer for RocketMQTemplate {}",
                 beanName), e);
         }
-        RocketMQTemplate rocketMQTemplate = (RocketMQTemplate)bean;
+        RocketMQTemplate rocketMQTemplate = (RocketMQTemplate) bean;
         rocketMQTemplate.setProducer(mqProducer);
         rocketMQTemplate.setMessageConverter(rocketMQMessageConverter.getMessageConverter());
-        rocketMQTemplate.setObjectMapper(objectMapper);
         log.info("Set real producer to :{} {}", beanName, annotation.value());
     }
 
     private DefaultMQProducer createProducer(ExtRocketMQTemplateConfiguration annotation) {
-        DefaultMQProducer producer = null;
 
         RocketMQProperties.Producer producerConfig = rocketMQProperties.getProducer();
         if (producerConfig == null) {
@@ -118,23 +110,18 @@ public class ExtProducerResetConfiguration implements ApplicationContextAware, S
         groupName = StringUtils.isEmpty(groupName) ? producerConfig.getGroup() : groupName;
 
         String ak = environment.resolvePlaceholders(annotation.accessKey());
-        ak = StringUtils.isEmpty(ak) ? producerConfig.getAccessKey() : annotation.accessKey();
+        ak = StringUtils.isEmpty(ak) ? producerConfig.getAccessKey() : ak;
         String sk = environment.resolvePlaceholders(annotation.secretKey());
-        sk = StringUtils.isEmpty(sk) ? producerConfig.getSecretKey() : annotation.secretKey();
+        sk = StringUtils.isEmpty(sk) ? producerConfig.getSecretKey() : sk;
+        boolean isEnableMsgTrace = annotation.enableMsgTrace();
         String customizedTraceTopic = environment.resolvePlaceholders(annotation.customizedTraceTopic());
         customizedTraceTopic = StringUtils.isEmpty(customizedTraceTopic) ? producerConfig.getCustomizedTraceTopic() : customizedTraceTopic;
 
-        if (!StringUtils.isEmpty(ak) && !StringUtils.isEmpty(sk)) {
-            producer = new DefaultMQProducer(groupName, new AclClientRPCHook(new SessionCredentials(ak, sk)),
-                annotation.enableMsgTrace(), customizedTraceTopic);
-            producer.setVipChannelEnabled(false);
-        } else {
-            producer = new DefaultMQProducer(groupName, annotation.enableMsgTrace(), customizedTraceTopic);
-        }
+        DefaultMQProducer producer = RocketMQUtil.createDefaultMQProducer(groupName, ak, sk, isEnableMsgTrace, customizedTraceTopic);
 
         producer.setNamesrvAddr(nameServer);
         producer.setSendMsgTimeout(annotation.sendMessageTimeout() == -1 ? producerConfig.getSendMessageTimeout() : annotation.sendMessageTimeout());
-        producer.setRetryTimesWhenSendFailed(annotation.retryTimesWhenSendAsyncFailed() == -1 ? producerConfig.getRetryTimesWhenSendFailed() : annotation.retryTimesWhenSendAsyncFailed());
+        producer.setRetryTimesWhenSendFailed(annotation.retryTimesWhenSendFailed() == -1 ? producerConfig.getRetryTimesWhenSendFailed() : annotation.retryTimesWhenSendFailed());
         producer.setRetryTimesWhenSendAsyncFailed(annotation.retryTimesWhenSendAsyncFailed() == -1 ? producerConfig.getRetryTimesWhenSendAsyncFailed() : annotation.retryTimesWhenSendAsyncFailed());
         producer.setMaxMessageSize(annotation.maxMessageSize() == -1 ? producerConfig.getMaxMessageSize() : annotation.maxMessageSize());
         producer.setCompressMsgBodyOverHowmuch(annotation.compressMessageBodyThreshold() == -1 ? producerConfig.getCompressMessageBodyThreshold() : annotation.compressMessageBodyThreshold());
@@ -149,13 +136,6 @@ public class ExtProducerResetConfiguration implements ApplicationContextAware, S
             throw new BeanDefinitionValidationException(String.format("Bean {} has been used in Spring Application Context, " +
                     "please check the @ExtRocketMQTemplateConfiguration",
                 annotation.value()));
-        }
-
-        if (rocketMQProperties.getNameServer() == null ||
-            rocketMQProperties.getNameServer().equals(environment.resolvePlaceholders(annotation.nameServer()))) {
-            throw new BeanDefinitionValidationException(
-                "Bad annotation definition in @ExtRocketMQTemplateConfiguration, nameServer property is same with " +
-                    "global property, please use the default RocketMQTemplate!");
         }
     }
 }

@@ -90,9 +90,14 @@ public @interface RocketMQMessageListener {
     long consumeFromSecondsAgo() default 10;
 
     /**
-     * Max consumer timeout, default 30s.
+     * Max re-consume times, -1 means 16 times.
      */
-    long consumeTimeout() default 30000L;
+    int maxReconsumeTimes() default -1;
+
+    /**
+     * Maximum amount of time in minutes a message may block the consuming thread.
+     */
+    long consumeTimeout() default 15L;
 
     /**
      * The property of "access-key".
@@ -107,7 +112,7 @@ public @interface RocketMQMessageListener {
     /**
      * Switch flag instance for message trace.
      */
-    boolean enableMsgTrace() default true;
+    boolean enableMsgTrace() default false;
 
     /**
      * The name value of message trace topic.If you don't config,you can use the default trace topic name.

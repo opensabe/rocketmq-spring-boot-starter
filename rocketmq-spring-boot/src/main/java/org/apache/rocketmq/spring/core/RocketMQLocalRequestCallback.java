@@ -14,22 +14,16 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+package org.apache.rocketmq.spring.core;
 
-package org.apache.rocketmq.spring.autoconfigure;
+/**
+ * Classes implementing this interface are used for processing callback events after receiving
+ * reply messages from consumers.
+ *
+ * @param <T> the type of message that wanted to receive from consumer
+ */
+public interface RocketMQLocalRequestCallback<T> {
+    void onSuccess(final T message);
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
-import org.springframework.context.annotation.Bean;
-import org.springframework.context.annotation.Configuration;
-
-@Configuration
-@ConditionalOnMissingBean(ObjectMapper.class)
-@Deprecated
-class JacksonFallbackConfiguration {
-
-    @Bean
-    public ObjectMapper rocketMQMessageObjectMapper() {
-        return new ObjectMapper();
-    }
-
+    void onException(final Throwable e);
 }

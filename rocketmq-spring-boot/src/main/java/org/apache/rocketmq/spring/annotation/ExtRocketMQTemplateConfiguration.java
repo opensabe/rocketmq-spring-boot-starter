@@ -17,13 +17,12 @@
 
 package org.apache.rocketmq.spring.annotation;
 
-import org.springframework.stereotype.Component;
-
 import java.lang.annotation.Documented;
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
+import org.springframework.stereotype.Component;
 
 @Target(ElementType.TYPE)
 @Retention(RetentionPolicy.RUNTIME)
@@ -38,7 +37,7 @@ public @interface ExtRocketMQTemplateConfiguration {
     /**
      * The property of "name-server".
      */
-    String nameServer();
+    String nameServer() default "${rocketmq.name-server:}";
 
     /**
      * Name of producer.
@@ -81,7 +80,7 @@ public @interface ExtRocketMQTemplateConfiguration {
     /**
      * Switch flag instance for message trace.
      */
-    boolean enableMsgTrace() default true;
+    boolean enableMsgTrace() default false;
     /**
      * The name value of message trace topic.If you don't config,you can use the default trace topic name.
      */
