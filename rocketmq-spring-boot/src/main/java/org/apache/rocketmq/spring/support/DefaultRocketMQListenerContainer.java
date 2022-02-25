@@ -202,16 +202,6 @@ public class DefaultRocketMQListenerContainer implements InitializingBean,
         this.consumeFromSecondsAgo = consumeTimestamp;
     }
 
-    @Deprecated
-    public ObjectMapper getObjectMapper() {
-        return objectMapper;
-    }
-
-    @Deprecated
-    public void setObjectMapper(ObjectMapper objectMapper) {
-        this.objectMapper = objectMapper;
-    }
-
     public MessageConverter getMessageConverter() {
         return messageConverter;
     }
