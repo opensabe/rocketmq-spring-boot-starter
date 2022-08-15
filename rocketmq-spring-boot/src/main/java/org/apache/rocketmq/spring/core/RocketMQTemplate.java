@@ -230,7 +230,7 @@ public class RocketMQTemplate extends AbstractMessageSendingTemplate<String> imp
     public <T> T sendAndReceive(String destination, Message<?> message, Type type, String hashKey,
         long timeout, int delayLevel) {
         if (Objects.isNull(message) || Objects.isNull(message.getPayload())) {
-            log.error("send request message failed. destination:{}, message is null ", destination);
+            log.warn("send request message failed. destination:{}, message is null ", destination);
             throw new IllegalArgumentException("`message` and `message.payload` cannot be null");
         }
 
@@ -248,7 +248,7 @@ public class RocketMQTemplate extends AbstractMessageSendingTemplate<String> imp
             }
             return replyMessage != null ? (T) doConvertMessage(replyMessage, type) : null;
         } catch (Exception e) {
-            log.error("send request message failed. destination:{}, message:{} ", destination, message);
+            log.warn("send request message failed. destination:{}, message:{} ", destination, message);
             throw new MessagingException(e.getMessage(), e);
         }
     }
@@ -420,7 +420,7 @@ public class RocketMQTemplate extends AbstractMessageSendingTemplate<String> imp
     public void sendAndReceive(String destination, Message<?> message,
         RocketMQLocalRequestCallback rocketMQLocalRequestCallback, String hashKey, long timeout, int delayLevel) {
         if (Objects.isNull(message) || Objects.isNull(message.getPayload())) {
-            log.error("send request message failed. destination:{}, message is null ", destination);
+            log.warn("send request message failed. destination:{}, message is null ", destination);
             throw new IllegalArgumentException("`message` and `message.payload` cannot be null");
         }
 
@@ -451,7 +451,7 @@ public class RocketMQTemplate extends AbstractMessageSendingTemplate<String> imp
             }
         } catch (
             Exception e) {
-            log.error("send request message failed. destination:{}, message:{} ", destination, message);
+            log.warn("send request message failed. destination:{}, message:{} ", destination, message);
             throw new MessagingException(e.getMessage(), e);
         }
 
@@ -508,7 +508,7 @@ public class RocketMQTemplate extends AbstractMessageSendingTemplate<String> imp
      */
     public <T extends Message> SendResult syncSend(String destination, Collection<T> messages, long timeout) {
         if (Objects.isNull(messages) || messages.size() == 0) {
-            log.error("syncSend with batch failed. destination:{}, messages is empty ", destination);
+            log.warn("syncSend with batch failed. destination:{}, messages is empty ", destination);
             throw new IllegalArgumentException("`messages` can not be empty");
         }
 
@@ -530,7 +530,7 @@ public class RocketMQTemplate extends AbstractMessageSendingTemplate<String> imp
             }
             return sendResult;
         } catch (Exception e) {
-            log.error("syncSend with batch failed. destination:{}, messages.size:{} ", destination, messages.size());
+            log.warn("syncSend with batch failed. destination:{}, messages.size:{} ", destination, messages.size());
             throw new MessagingException(e.getMessage(), e);
         }
     }
@@ -546,7 +546,7 @@ public class RocketMQTemplate extends AbstractMessageSendingTemplate<String> imp
      */
     public SendResult syncSend(String destination, Message<?> message, long timeout, int delayLevel) {
         if (Objects.isNull(message) || Objects.isNull(message.getPayload())) {
-            log.error("syncSend failed. destination:{}, message is null ", destination);
+            log.warn("syncSend failed. destination:{}, message is null ", destination);
             throw new IllegalArgumentException("`message` and `message.payload` cannot be null");
         }
         try {
@@ -562,7 +562,7 @@ public class RocketMQTemplate extends AbstractMessageSendingTemplate<String> imp
             }
             return sendResult;
         } catch (Exception e) {
-            log.error("syncSend failed. destination:{}, message:{} ", destination, message);
+            log.warn("syncSend failed. destination:{}, message:{} ", destination, message);
             throw new MessagingException(e.getMessage(), e);
         }
     }
@@ -614,7 +614,7 @@ public class RocketMQTemplate extends AbstractMessageSendingTemplate<String> imp
      */
     public SendResult syncSendOrderly(String destination, Message<?> message, String hashKey, long timeout) {
         if (Objects.isNull(message) || Objects.isNull(message.getPayload())) {
-            log.error("syncSendOrderly failed. destination:{}, message is null ", destination);
+            log.warn("syncSendOrderly failed. destination:{}, message is null ", destination);
             throw new IllegalArgumentException("`message` and `message.payload` cannot be null");
         }
         try {
@@ -627,7 +627,7 @@ public class RocketMQTemplate extends AbstractMessageSendingTemplate<String> imp
             }
             return sendResult;
         } catch (Exception e) {
-            log.error("syncSendOrderly failed. destination:{}, message:{} ", destination, message);
+            log.warn("syncSendOrderly failed. destination:{}, message:{} ", destination, message);
             throw new MessagingException(e.getMessage(), e);
         }
     }
@@ -681,7 +681,7 @@ public class RocketMQTemplate extends AbstractMessageSendingTemplate<String> imp
      */
     public <T extends Message> SendResult syncSendOrderly(String destination, Collection<T> messages, String hashKey, long timeout) {
         if (Objects.isNull(messages) || messages.isEmpty()) {
-            log.error("syncSendOrderly failed. destination:{}, message is null ", destination);
+            log.warn("syncSendOrderly failed. destination:{}, message is null ", destination);
             throw new IllegalArgumentException("`messages` can not be empty");
         }
         try {
@@ -718,7 +718,7 @@ public class RocketMQTemplate extends AbstractMessageSendingTemplate<String> imp
     public void asyncSend(String destination, Message<?> message, SendCallback sendCallback, long timeout,
         int delayLevel) {
         if (Objects.isNull(message) || Objects.isNull(message.getPayload())) {
-            log.error("asyncSend failed. destination:{}, message is null ", destination);
+            log.warn("asyncSend failed. destination:{}, message is null ", destination);
             throw new IllegalArgumentException("`message` and `message.payload` cannot be null");
         }
         try {
@@ -800,14 +800,14 @@ public class RocketMQTemplate extends AbstractMessageSendingTemplate<String> imp
     public void asyncSendOrderly(String destination, Message<?> message, String hashKey, SendCallback sendCallback,
         long timeout) {
         if (Objects.isNull(message) || Objects.isNull(message.getPayload())) {
-            log.error("asyncSendOrderly failed. destination:{}, message is null ", destination);
+            log.warn("asyncSendOrderly failed. destination:{}, message is null ", destination);
             throw new IllegalArgumentException("`message` and `message.payload` cannot be null");
         }
         try {
             org.apache.rocketmq.common.message.Message rocketMsg = this.createRocketMqMessage(destination, message);
             producer.send(rocketMsg, messageQueueSelector, hashKey, sendCallback, timeout);
         } catch (Exception e) {
-            log.error("asyncSendOrderly failed. destination:{}, message:{} ", destination, message);
+            log.warn("asyncSendOrderly failed. destination:{}, message:{} ", destination, message);
             throw new MessagingException(e.getMessage(), e);
         }
     }
@@ -862,14 +862,14 @@ public class RocketMQTemplate extends AbstractMessageSendingTemplate<String> imp
      */
     public void sendOneWay(String destination, Message<?> message) {
         if (Objects.isNull(message) || Objects.isNull(message.getPayload())) {
-            log.error("sendOneWay failed. destination:{}, message is null ", destination);
+            log.warn("sendOneWay failed. destination:{}, message is null ", destination);
             throw new IllegalArgumentException("`message` and `message.payload` cannot be null");
         }
         try {
             org.apache.rocketmq.common.message.Message rocketMsg = this.createRocketMqMessage(destination, message);
             producer.sendOneway(rocketMsg);
         } catch (Exception e) {
-            log.error("sendOneWay failed. destination:{}, message:{} ", destination, message);
+            log.warn("sendOneWay failed. destination:{}, message:{} ", destination, message);
             throw new MessagingException(e.getMessage(), e);
         }
     }
@@ -894,14 +894,14 @@ public class RocketMQTemplate extends AbstractMessageSendingTemplate<String> imp
      */
     public void sendOneWayOrderly(String destination, Message<?> message, String hashKey) {
         if (Objects.isNull(message) || Objects.isNull(message.getPayload())) {
-            log.error("sendOneWayOrderly failed. destination:{}, message is null ", destination);
+            log.warn("sendOneWayOrderly failed. destination:{}, message is null ", destination);
             throw new IllegalArgumentException("`message` and `message.payload` cannot be null");
         }
         try {
             org.apache.rocketmq.common.message.Message rocketMsg = this.createRocketMqMessage(destination, message);
             producer.sendOneway(rocketMsg, messageQueueSelector, hashKey);
         } catch (Exception e) {
-            log.error("sendOneWayOrderly failed. destination:{}, message:{}", destination, message);
+            log.warn("sendOneWayOrderly failed. destination:{}, message:{}", destination, message);
             throw new MessagingException(e.getMessage(), e);
         }
     }
@@ -926,7 +926,7 @@ public class RocketMQTemplate extends AbstractMessageSendingTemplate<String> imp
             try {
                 consumer.start();
             } catch (Exception e) {
-                log.error("Failed to startup PullConsumer for RocketMQTemplate", e);
+                log.warn("Failed to startup PullConsumer for RocketMQTemplate", e);
             }
         }
     }
@@ -1007,7 +1007,7 @@ public class RocketMQTemplate extends AbstractMessageSendingTemplate<String> imp
                         return ((SmartMessageConverter) this.getMessageConverter()).fromMessage(MessageBuilder.withPayload(str).build(), (Class<?>) ((ParameterizedType) type).getRawType(), null);
                     }
                 } catch (Exception e) {
-                    log.error("convert failed. str:{}, msgType:{}", str, type);
+                    log.warn("convert failed. str:{}, msgType:{}", str, type);
                     throw new RuntimeException("cannot convert message to " + type, e);
                 }
             }
