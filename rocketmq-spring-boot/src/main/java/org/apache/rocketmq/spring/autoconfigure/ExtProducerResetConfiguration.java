@@ -37,23 +37,23 @@ import org.springframework.context.ApplicationContextAware;
 import org.springframework.context.ConfigurableApplicationContext;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.support.GenericApplicationContext;
-import org.springframework.core.env.StandardEnvironment;
+import org.springframework.core.env.ConfigurableEnvironment;
 import org.springframework.util.StringUtils;
 
 @Configuration
 public class ExtProducerResetConfiguration implements ApplicationContextAware, SmartInitializingSingleton {
-    private final static Logger log = LoggerFactory.getLogger(ExtProducerResetConfiguration.class);
+    private static final Logger log = LoggerFactory.getLogger(ExtProducerResetConfiguration.class);
 
     private ConfigurableApplicationContext applicationContext;
 
-    private StandardEnvironment environment;
+    private ConfigurableEnvironment environment;
 
     private RocketMQProperties rocketMQProperties;
 
     private RocketMQMessageConverter rocketMQMessageConverter;
 
     public ExtProducerResetConfiguration(RocketMQMessageConverter rocketMQMessageConverter,
-        StandardEnvironment environment, RocketMQProperties rocketMQProperties) {
+        ConfigurableEnvironment environment, RocketMQProperties rocketMQProperties) {
         this.rocketMQMessageConverter = rocketMQMessageConverter;
         this.environment = environment;
         this.rocketMQProperties = rocketMQProperties;
@@ -85,8 +85,6 @@ public class ExtProducerResetConfiguration implements ApplicationContextAware, S
         validate(annotation, genericApplicationContext);
 
         DefaultMQProducer mqProducer = createProducer(annotation);
-        // Set instanceName same as the beanName
-        mqProducer.setInstanceName(beanName);
         try {
             mqProducer.start();
         } catch (MQClientException e) {
@@ -116,6 +114,8 @@ public class ExtProducerResetConfiguration implements ApplicationContextAware, S
         boolean isEnableMsgTrace = annotation.enableMsgTrace();
         String customizedTraceTopic = environment.resolvePlaceholders(annotation.customizedTraceTopic());
         customizedTraceTopic = StringUtils.isEmpty(customizedTraceTopic) ? producerConfig.getCustomizedTraceTopic() : customizedTraceTopic;
+        //if String is not is equal "true" TLS mode will represent the as default value false
+        boolean useTLS = new Boolean(environment.resolvePlaceholders(annotation.tlsEnable()));
 
         DefaultMQProducer producer = RocketMQUtil.createDefaultMQProducer(groupName, ak, sk, isEnableMsgTrace, customizedTraceTopic);
 
@@ -126,7 +126,10 @@ public class ExtProducerResetConfiguration implements ApplicationContextAware, S
         producer.setMaxMessageSize(annotation.maxMessageSize() == -1 ? producerConfig.getMaxMessageSize() : annotation.maxMessageSize());
         producer.setCompressMsgBodyOverHowmuch(annotation.compressMessageBodyThreshold() == -1 ? producerConfig.getCompressMessageBodyThreshold() : annotation.compressMessageBodyThreshold());
         producer.setRetryAnotherBrokerWhenNotStoreOK(annotation.retryNextServer());
-
+        producer.setUseTLS(useTLS);
+        String namespace = environment.resolvePlaceholders(annotation.namespace());
+        producer.setNamespace(RocketMQUtil.getNamespace(namespace, producerConfig.getNamespace()));
+        producer.setInstanceName(annotation.instanceName());
         return producer;
     }
 

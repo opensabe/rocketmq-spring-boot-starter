@@ -562,7 +562,7 @@ public class RocketMQTemplate extends AbstractMessageSendingTemplate<String> imp
             }
             return sendResult;
         } catch (Exception e) {
-            log.warn("syncSend failed. destination:{}, message:{} ", destination, message);
+            log.warn("syncSend failed. destination:{}, message:{}, detail exception info: ", destination, message, e);
             throw new MessagingException(e.getMessage(), e);
         }
     }
@@ -785,6 +785,47 @@ public class RocketMQTemplate extends AbstractMessageSendingTemplate<String> imp
      */
     public void asyncSend(String destination, Object payload, SendCallback sendCallback) {
         asyncSend(destination, payload, sendCallback, producer.getSendMsgTimeout());
+    }
+
+    /**
+     * asyncSend batch messages
+     *
+     * @param destination formats: `topicName:tags`
+     * @param messages Collection of {@link org.springframework.messaging.Message}
+     * @param sendCallback {@link SendCallback}
+     */
+    public <T extends Message> void asyncSend(String destination, Collection<T> messages, SendCallback sendCallback) {
+        asyncSend(destination, messages, sendCallback, producer.getSendMsgTimeout());
+    }
+
+    /**
+     * asyncSend batch messages in a given timeout.
+     *
+     * @param destination formats: `topicName:tags`
+     * @param messages Collection of {@link org.springframework.messaging.Message}
+     * @param sendCallback {@link SendCallback}
+     * @param timeout send timeout with millis
+     */
+    public <T extends Message> void asyncSend(String destination, Collection<T> messages, SendCallback sendCallback, long timeout) {
+        if (Objects.isNull(messages) || messages.size() == 0) {
+            log.error("asyncSend with batch failed. destination:{}, messages is empty ", destination);
+            throw new IllegalArgumentException("`messages` can not be empty");
+        }
+
+        try {
+            Collection<org.apache.rocketmq.common.message.Message> rmqMsgs = new ArrayList<>();
+            for (Message msg : messages) {
+                if (Objects.isNull(msg) || Objects.isNull(msg.getPayload())) {
+                    log.warn("Found a message empty in the batch, skip it");
+                    continue;
+                }
+                rmqMsgs.add(this.createRocketMqMessage(destination, msg));
+            }
+            producer.send(rmqMsgs, sendCallback, timeout);
+        } catch (Exception e) {
+            log.error("asyncSend with batch failed. destination:{}, messages.size:{} ", destination, messages.size());
+            throw new MessagingException(e.getMessage(), e);
+        }
     }
 
     /**

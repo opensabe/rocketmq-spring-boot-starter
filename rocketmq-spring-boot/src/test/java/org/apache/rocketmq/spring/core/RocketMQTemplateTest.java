@@ -16,6 +16,8 @@
  */
 package org.apache.rocketmq.spring.core;
 
+import java.util.ArrayList;
+import java.util.List;
 import javax.annotation.Resource;
 import org.apache.rocketmq.client.AccessChannel;
 import org.apache.rocketmq.client.producer.SendCallback;
@@ -51,7 +53,7 @@ import static org.mockito.ArgumentMatchers.any;
     "rocketmq.producer.secret-key=test-sk", "rocketmq.accessChannel=LOCAL",
     "rocketmq.producer.sendMessageTimeout= 3500", "rocketmq.producer.retryTimesWhenSendFailed=3",
     "rocketmq.producer.retryTimesWhenSendAsyncFailed=3",
-    "rocketmq.consumer.group=spring_rocketmq", "rocketmq.consumer.topic=test"}, classes = {RocketMQAutoConfiguration.class, TransactionListenerImpl.class})
+    "rocketmq.pull-consumer.group=spring_rocketmq", "rocketmq.pull-consumer.topic=test"}, classes = {RocketMQAutoConfiguration.class, TransactionListenerImpl.class})
 
 public class RocketMQTemplateTest {
     @Resource
@@ -90,6 +92,26 @@ public class RocketMQTemplateTest {
 
         try {
             rocketMQTemplate.syncSendOrderly(topic, "payload", "hashkey");
+        } catch (MessagingException e) {
+            assertThat(e).hasMessageContaining("org.apache.rocketmq.remoting.exception.RemotingConnectException: connect to [127.0.0.1:9876] failed");
+        }
+    }
+    @Test
+    public void testAsyncBatchSendMessage() {
+        List<Message> messages = new ArrayList<>();
+        for (int i = 0; i < 3; i++) {
+            messages.add(MessageBuilder.withPayload("payload" + i).build());
+        }
+        try {
+            rocketMQTemplate.asyncSend(topic, messages, new SendCallback() {
+                @Override public void onSuccess(SendResult sendResult) {
+
+                }
+
+                @Override public void onException(Throwable e) {
+
+                }
+            });
         } catch (MessagingException e) {
             assertThat(e).hasMessageContaining("org.apache.rocketmq.remoting.exception.RemotingConnectException: connect to [127.0.0.1:9876] failed");
         }

@@ -30,7 +30,6 @@ import org.apache.rocketmq.client.producer.TransactionMQProducer;
 import org.apache.rocketmq.client.trace.AsyncTraceDispatcher;
 import org.apache.rocketmq.client.trace.TraceDispatcher;
 import org.apache.rocketmq.client.trace.hook.SendMessageTraceHookImpl;
-import org.apache.rocketmq.common.UtilAll;
 import org.apache.rocketmq.common.message.Message;
 import org.apache.rocketmq.common.message.MessageConst;
 import org.apache.rocketmq.common.message.MessageExt;
@@ -105,7 +104,9 @@ public class RocketMQUtil {
                 setHeader(toRocketHeaderKey(RocketMQHeaders.FLAG), message.getFlag()).
                 setHeader(toRocketHeaderKey(RocketMQHeaders.QUEUE_ID), message.getQueueId()).
                 setHeader(toRocketHeaderKey(RocketMQHeaders.SYS_FLAG), message.getSysFlag()).
-                setHeader(toRocketHeaderKey(RocketMQHeaders.TRANSACTION_ID), message.getTransactionId());
+                setHeader(toRocketHeaderKey(RocketMQHeaders.TRANSACTION_ID), message.getTransactionId()).
+                setHeader(toRocketHeaderKey(RocketMQHeaders.DELAY), message.getDelayTimeLevel()).
+                setHeader(toRocketHeaderKey(RocketMQHeaders.WAIT), message.isWaitStoreMsgOK());
         addUserProperties(message.getProperties(), messageBuilder);
         return messageBuilder.build();
     }
@@ -196,7 +197,7 @@ public class RocketMQUtil {
             }
             rocketMsg.setFlag(flag);
             Object waitStoreMsgOkObj = headers.getOrDefault("WAIT_STORE_MSG_OK", "true");
-            rocketMsg.setWaitStoreMsgOK(Boolean.TRUE.equals(waitStoreMsgOkObj));
+            rocketMsg.setWaitStoreMsgOK(!waitStoreMsgOkObj.equals("false"));
             headers.entrySet().stream()
                 .filter(entry -> !Objects.equals(entry.getKey(), "FLAG")
                     && !Objects.equals(entry.getKey(), "WAIT_STORE_MSG_OK")) // exclude "FLAG", "WAIT_STORE_MSG_OK"
@@ -282,19 +283,10 @@ public class RocketMQUtil {
 
         return producer;
     }
-    
-    public static String getInstanceName(String identify) {
-        char separator = '@';
-        StringBuilder instanceName = new StringBuilder();
-        instanceName.append(identify)
-                .append(separator).append(UtilAll.getPid())
-                .append(separator).append(System.nanoTime());
-        return instanceName.toString();
-    }
 
     public static DefaultLitePullConsumer createDefaultLitePullConsumer(String nameServer, String accessChannel,
             String groupName, String topicName, MessageModel messageModel, SelectorType selectorType,
-            String selectorExpression, String ak, String sk, int pullBatchSize)
+            String selectorExpression, String ak, String sk, int pullBatchSize, boolean useTLS)
             throws MQClientException {
         DefaultLitePullConsumer litePullConsumer = null;
         if (!StringUtils.isEmpty(ak) && !StringUtils.isEmpty(sk)) {
@@ -304,11 +296,11 @@ public class RocketMQUtil {
             litePullConsumer = new DefaultLitePullConsumer(groupName);
         }
         litePullConsumer.setNamesrvAddr(nameServer);
-        litePullConsumer.setInstanceName(RocketMQUtil.getInstanceName(nameServer));
         litePullConsumer.setPullBatchSize(pullBatchSize);
         if (accessChannel != null) {
             litePullConsumer.setAccessChannel(AccessChannel.valueOf(accessChannel));
         }
+        litePullConsumer.setUseTLS(useTLS);
 
         switch (messageModel) {
             case BROADCASTING:
@@ -333,5 +325,11 @@ public class RocketMQUtil {
         }
 
         return litePullConsumer;
+    }
+
+    public static String getNamespace(String specifiedNamespace, String defaultNamespace) {
+        // prefer to use annotation namespace
+        // if is empty a default namespace will be used
+        return !StringUtils.hasLength(specifiedNamespace) && StringUtils.hasLength(defaultNamespace) ? defaultNamespace : specifiedNamespace;
     }
 }
