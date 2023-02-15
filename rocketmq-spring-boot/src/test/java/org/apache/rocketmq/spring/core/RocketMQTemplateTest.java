@@ -16,6 +16,8 @@
  */
 package org.apache.rocketmq.spring.core;
 
+import java.util.ArrayList;
+import java.util.List;
 import javax.annotation.Resource;
 import org.apache.rocketmq.client.AccessChannel;
 import org.apache.rocketmq.client.producer.SendCallback;
@@ -42,7 +44,6 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.ArgumentMatchers.any;
 
 @RunWith(SpringJUnit4ClassRunner.class)
 @SpringBootTest(properties = {
@@ -51,7 +52,7 @@ import static org.mockito.ArgumentMatchers.any;
     "rocketmq.producer.secret-key=test-sk", "rocketmq.accessChannel=LOCAL",
     "rocketmq.producer.sendMessageTimeout= 3500", "rocketmq.producer.retryTimesWhenSendFailed=3",
     "rocketmq.producer.retryTimesWhenSendAsyncFailed=3",
-    "rocketmq.consumer.group=spring_rocketmq", "rocketmq.consumer.topic=test"}, classes = {RocketMQAutoConfiguration.class, TransactionListenerImpl.class})
+    "rocketmq.pull-consumer.group=spring_rocketmq", "rocketmq.pull-consumer.topic=test"}, classes = {RocketMQAutoConfiguration.class, TransactionListenerImpl.class})
 
 public class RocketMQTemplateTest {
     @Resource
@@ -71,7 +72,7 @@ public class RocketMQTemplateTest {
         try {
             rocketMQTemplate.syncSend(topic, "payload");
         } catch (MessagingException e) {
-            assertThat(e).hasMessageContaining("org.apache.rocketmq.remoting.exception.RemotingConnectException: connect to [127.0.0.1:9876] failed");
+            assertThat(e).hasMessageContaining("org.apache.rocketmq.remoting.exception.RemotingConnectException: connect to null failed");
         }
 
         try {
@@ -90,6 +91,32 @@ public class RocketMQTemplateTest {
 
         try {
             rocketMQTemplate.syncSendOrderly(topic, "payload", "hashkey");
+        } catch (MessagingException e) {
+            assertThat(e).hasMessageContaining("org.apache.rocketmq.remoting.exception.RemotingConnectException: connect to null failed");
+        }
+
+        try {
+            rocketMQTemplate.syncSendDelayTimeSeconds(topic, "payload", 10L);
+        } catch (MessagingException e) {
+            assertThat(e).hasMessageContaining("org.apache.rocketmq.remoting.exception.RemotingConnectException: connect to null failed");
+        }
+    }
+    @Test
+    public void testAsyncBatchSendMessage() {
+        List<Message> messages = new ArrayList<>();
+        for (int i = 0; i < 3; i++) {
+            messages.add(MessageBuilder.withPayload("payload" + i).build());
+        }
+        try {
+            rocketMQTemplate.asyncSend(topic, messages, new SendCallback() {
+                @Override public void onSuccess(SendResult sendResult) {
+
+                }
+
+                @Override public void onException(Throwable e) {
+
+                }
+            });
         } catch (MessagingException e) {
             assertThat(e).hasMessageContaining("org.apache.rocketmq.remoting.exception.RemotingConnectException: connect to [127.0.0.1:9876] failed");
         }
@@ -160,19 +187,19 @@ public class RocketMQTemplateTest {
     }
 
     @Test
-    public void testSendAndReceive_Sync() throws InterruptedException {
+    public void testSendAndReceive_Sync() {
         try {
             String responseMessage = rocketMQTemplate.sendAndReceive(stringRequestTopic, MessageBuilder.withPayload("requestTopicSync").build(), String.class);
             assertThat(responseMessage).isNotNull();
         } catch (MessagingException e) {
-            assertThat(e).hasMessageContaining("org.apache.rocketmq.remoting.exception.RemotingConnectException: connect to [127.0.0.1:9876] failed");
+            assertThat(e).hasMessageContaining("org.apache.rocketmq.remoting.exception.RemotingConnectException: connect to null failed");
         }
 
         try {
             String responseMessage = rocketMQTemplate.sendAndReceive(stringRequestTopic, "requestTopicSync", String.class, "orderId");
             assertThat(responseMessage).isNotNull();
         } catch (MessagingException e) {
-            assertThat(e).hasMessageContaining("org.apache.rocketmq.remoting.exception.RemotingConnectException: connect to [127.0.0.1:9876] failed");
+            assertThat(e).hasMessageContaining("org.apache.rocketmq.remoting.exception.RemotingConnectException: connect to null failed");
         }
     }
 
@@ -189,7 +216,7 @@ public class RocketMQTemplateTest {
                 }
             });
         } catch (MessagingException e) {
-            assertThat(e).hasMessageContaining("org.apache.rocketmq.remoting.exception.RemotingConnectException: connect to [127.0.0.1:9876] failed");
+            assertThat(e).hasMessageContaining("org.apache.rocketmq.remoting.exception.RemotingConnectException: connect to null failed");
         }
 
         try {
@@ -203,7 +230,7 @@ public class RocketMQTemplateTest {
                 }
             }, "order-id");
         } catch (MessagingException e) {
-            assertThat(e).hasMessageContaining("org.apache.rocketmq.remoting.exception.RemotingConnectException: connect to [127.0.0.1:9876] failed");
+            assertThat(e).hasMessageContaining("org.apache.rocketmq.remoting.exception.RemotingConnectException: connect to null failed");
         }
 
         try {
@@ -217,7 +244,7 @@ public class RocketMQTemplateTest {
                 }
             }, "order-id", 5000);
         } catch (MessagingException e) {
-            assertThat(e).hasMessageContaining("org.apache.rocketmq.remoting.exception.RemotingConnectException: connect to [127.0.0.1:9876] failed");
+            assertThat(e).hasMessageContaining("org.apache.rocketmq.remoting.exception.RemotingConnectException: connect to null failed");
         }
         try {
             rocketMQTemplate.sendAndReceive(objectRequestTopic, "requestTopicAsyncWithTimeout", new RocketMQLocalRequestCallback<MessageExt>() {
@@ -230,7 +257,7 @@ public class RocketMQTemplateTest {
                 }
             }, 5000);
         } catch (MessagingException e) {
-            assertThat(e).hasMessageContaining("org.apache.rocketmq.remoting.exception.RemotingConnectException: connect to [127.0.0.1:9876] failed");
+            assertThat(e).hasMessageContaining("org.apache.rocketmq.remoting.exception.RemotingConnectException: connect to null failed");
         }
     }
 

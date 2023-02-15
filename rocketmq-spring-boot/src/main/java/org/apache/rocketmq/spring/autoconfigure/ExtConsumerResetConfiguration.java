@@ -37,7 +37,7 @@ import org.springframework.context.ApplicationContextAware;
 import org.springframework.context.ConfigurableApplicationContext;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.support.GenericApplicationContext;
-import org.springframework.core.env.StandardEnvironment;
+import org.springframework.core.env.ConfigurableEnvironment;
 import org.springframework.util.Assert;
 import org.springframework.util.StringUtils;
 
@@ -47,18 +47,18 @@ import java.util.stream.Collectors;
 @Configuration
 public class ExtConsumerResetConfiguration implements ApplicationContextAware, SmartInitializingSingleton {
 
-    private final static Logger log = LoggerFactory.getLogger(ExtConsumerResetConfiguration.class);
+    private static final Logger log = LoggerFactory.getLogger(ExtConsumerResetConfiguration.class);
 
     private ConfigurableApplicationContext applicationContext;
 
-    private StandardEnvironment environment;
+    private ConfigurableEnvironment environment;
 
     private RocketMQProperties rocketMQProperties;
 
     private RocketMQMessageConverter rocketMQMessageConverter;
 
     public ExtConsumerResetConfiguration(RocketMQMessageConverter rocketMQMessageConverter,
-            StandardEnvironment environment, RocketMQProperties rocketMQProperties) {
+            ConfigurableEnvironment environment, RocketMQProperties rocketMQProperties) {
         this.rocketMQMessageConverter = rocketMQMessageConverter;
         this.environment = environment;
         this.rocketMQProperties = rocketMQProperties;
@@ -93,8 +93,6 @@ public class ExtConsumerResetConfiguration implements ApplicationContextAware, S
         DefaultLitePullConsumer consumer = null;
         try {
             consumer = createConsumer(annotation);
-            // Set instanceName same as the beanName
-            consumer.setInstanceName(beanName);
             consumer.start();
         } catch (Exception e) {
             log.error("Failed to startup PullConsumer for RocketMQTemplate {}", beanName, e);
@@ -108,9 +106,9 @@ public class ExtConsumerResetConfiguration implements ApplicationContextAware, S
     private DefaultLitePullConsumer createConsumer(ExtRocketMQConsumerConfiguration annotation)
             throws MQClientException {
 
-        RocketMQProperties.Consumer consumerConfig = rocketMQProperties.getConsumer();
+        RocketMQProperties.PullConsumer consumerConfig = rocketMQProperties.getPullConsumer();
         if (consumerConfig == null) {
-            consumerConfig = new RocketMQProperties.Consumer();
+            consumerConfig = new RocketMQProperties.PullConsumer();
         }
         String nameServer = resolvePlaceholders(annotation.nameServer(), rocketMQProperties.getNameServer());
         String groupName = resolvePlaceholders(annotation.group(), consumerConfig.getGroup());
@@ -122,19 +120,25 @@ public class ExtConsumerResetConfiguration implements ApplicationContextAware, S
         String accessChannel = resolvePlaceholders(annotation.accessChannel(), rocketMQProperties.getAccessChannel());
         MessageModel messageModel = annotation.messageModel();
         SelectorType selectorType = annotation.selectorType();
-        String selectorExpression = annotation.selectorExpression();
+        String selectorExpression = resolvePlaceholders(annotation.selectorExpression(), consumerConfig.getSelectorExpression());
         String ak = resolvePlaceholders(annotation.accessKey(), consumerConfig.getAccessKey());
         String sk = resolvePlaceholders(annotation.secretKey(), consumerConfig.getSecretKey());
         int pullBatchSize = annotation.pullBatchSize();
-
+        //If the string is not equal to "true", the TLS mode will be represented as the default value of false
+        boolean useTLS = new Boolean(environment.resolvePlaceholders(annotation.tlsEnable()));
         DefaultLitePullConsumer litePullConsumer = RocketMQUtil.createDefaultLitePullConsumer(nameServer, accessChannel,
-                groupName, topicName, messageModel, selectorType, selectorExpression, ak, sk, pullBatchSize);
+                groupName, topicName, messageModel, selectorType, selectorExpression, ak, sk, pullBatchSize, useTLS);
+        litePullConsumer.setEnableMsgTrace(annotation.enableMsgTrace());
+        litePullConsumer.setCustomizedTraceTopic(resolvePlaceholders(annotation.customizedTraceTopic(), consumerConfig.getCustomizedTraceTopic()));
+        String namespace = environment.resolvePlaceholders(annotation.namespace());
+        litePullConsumer.setNamespace(RocketMQUtil.getNamespace(namespace, consumerConfig.getNamespace()));
+        litePullConsumer.setInstanceName(annotation.instanceName());
         return litePullConsumer;
     }
 
     private String resolvePlaceholders(String text, String defaultValue) {
         String value = environment.resolvePlaceholders(text);
-        return StringUtils.isEmpty(value) ? defaultValue : value;
+        return StringUtils.hasLength(value) ? value : defaultValue;
     }
 
     private void validate(ExtRocketMQConsumerConfiguration annotation,

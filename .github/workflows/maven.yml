@@ -13,18 +13,26 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+name: Java CI with Maven
 
-spring.application.name=rocketmq-consume-acl-demo
+on:
+  push:
+    branches: [ "master" ]
+  pull_request:
+    branches: [ "master" ]
 
-rocketmq.name-server=Endpoint_of_cloud_MQ
-# When set rocketmq.pull-consumer.group and rocketmq.pull-consumer.topic, rocketmqTemplate will start lite pull consumer
-# If you do not want to use lite pull consumer, please do not set rocketmq.pull-consumer.group and rocketmq.pull-consumer.topic
-rocketmq.pull-consumer.group=my-group1 
-rocketmq.pull-consumer.topic=test
-rocketmq.topic=normal_topic_define_in_cloud_MQ
+jobs:
+  build:
 
-# properties used in application code
-demo.rocketmq.transTopic=transaction_topic_define_in_cloud_MQ
+    runs-on: ubuntu-latest
 
-rocketmq.consumer.access-key=AK
-rocketmq.consumer.secret-key=SK
+    steps:
+    - uses: actions/checkout@v3
+    - name: Set up JDK 8
+      uses: actions/setup-java@v3
+      with:
+        java-version: '8'
+        distribution: 'temurin'
+        cache: maven
+    - name: Build with Maven
+      run: mvn -B package --file pom.xml
