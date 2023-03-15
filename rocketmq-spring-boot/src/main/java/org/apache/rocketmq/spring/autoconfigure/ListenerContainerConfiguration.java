@@ -82,7 +82,7 @@ public class ListenerContainerConfiguration implements ApplicationContextAware {
         String topic = this.environment.resolvePlaceholders(annotation.topic());
 
         boolean listenerEnabled =
-            (boolean) rocketMQProperties.getPushConsumer().getListeners().getOrDefault(consumerGroup, Collections.EMPTY_MAP)
+            (boolean) rocketMQProperties.getConsumer().getListeners().getOrDefault(consumerGroup, Collections.EMPTY_MAP)
                 .getOrDefault(topic, true);
 
         if (!listenerEnabled) {
@@ -120,15 +120,15 @@ public class ListenerContainerConfiguration implements ApplicationContextAware {
         container.setRocketMQMessageListener(annotation);
 
         String nameServer = environment.resolvePlaceholders(annotation.nameServer());
-        nameServer = StringUtils.isEmpty(nameServer) ? rocketMQProperties.getNameServer() : nameServer;
+        nameServer = StringUtils.hasLength(nameServer) ? nameServer : rocketMQProperties.getNameServer();
         String accessChannel = environment.resolvePlaceholders(annotation.accessChannel());
         container.setNameServer(nameServer);
-        if (!StringUtils.isEmpty(accessChannel)) {
+        if (StringUtils.hasLength(accessChannel)) {
             container.setAccessChannel(AccessChannel.valueOf(accessChannel));
         }
         container.setTopic(environment.resolvePlaceholders(annotation.topic()));
         String tags = environment.resolvePlaceholders(annotation.selectorExpression());
-        if (!StringUtils.isEmpty(tags)) {
+        if (StringUtils.hasLength(tags)) {
             container.setSelectorExpression(tags);
         }
         container.setConsumerGroup(environment.resolvePlaceholders(annotation.consumerGroup()));
@@ -143,7 +143,7 @@ public class ListenerContainerConfiguration implements ApplicationContextAware {
 
         String namespace = environment.resolvePlaceholders(annotation.namespace());
         container.setNamespace(RocketMQUtil.getNamespace(namespace,
-            rocketMQProperties.getPushConsumer().getNamespace()));
+            rocketMQProperties.getConsumer().getNamespace()));
         return container;
     }
 

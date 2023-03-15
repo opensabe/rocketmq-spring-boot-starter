@@ -703,15 +703,15 @@ public class DefaultRocketMQListenerContainer implements InitializingBean,
                 throw new IllegalArgumentException("Property 'consumeMode' was wrong.");
         }
 
-        //if String is not is equal "true" TLS mode will represent the as default value false
-        consumer.setUseTLS(new Boolean(tlsEnable));
-
         if (this.consumeFromWhere.equals(ConsumeFromWhere.CONSUME_FROM_TIMESTAMP)) {
             consumer.setConsumeFromWhere(ConsumeFromWhere.CONSUME_FROM_TIMESTAMP);
             consumer.setConsumeTimestamp(UtilAll.timeMillisToHumanString3(System.currentTimeMillis() - (1000 * this.consumeFromSecondsAgo)));
         } else {
             consumer.setConsumeFromWhere(consumeFromWhere);
         }
+
+        //if String is not is equal "true" TLS mode will represent the as default value false
+        consumer.setUseTLS(new Boolean(tlsEnable));
 
         if (rocketMQListener instanceof RocketMQPushConsumerLifecycleListener) {
             ((RocketMQPushConsumerLifecycleListener) rocketMQListener).prepareStart(consumer);
