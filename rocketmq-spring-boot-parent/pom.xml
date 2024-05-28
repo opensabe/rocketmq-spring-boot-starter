@@ -20,7 +20,7 @@
     <modelVersion>4.0.0</modelVersion>
 
     <parent>
-        <groupId>com.sabegeek</groupId>
+        <groupId>com.github.opensabe</groupId>
         <artifactId>rocketmq-spring-all</artifactId>
         <version>2.2.4-SNAPSHOT</version>
         <relativePath>../pom.xml</relativePath>

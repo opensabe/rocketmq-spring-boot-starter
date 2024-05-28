@@ -25,7 +25,7 @@
         <version>18</version>
     </parent>
     
-    <groupId>com.sabegeek</groupId>
+    <groupId>com.github.opensabe</groupId>
     <artifactId>rocketmq-spring-all</artifactId>
     <version>2.2.4-SNAPSHOT</version>
     <packaging>pom</packaging>
@@ -41,6 +41,8 @@
         <developerConnection>scm:git:git@github.com:apache/rocketmq-spring.git</developerConnection>
         <tag>HEAD</tag>
     </scm>
+
+    <!-- 打包上传二进制文件到仓库配置 -->
     <distributionManagement>
         <repository>
             <id>matchplay-releases</id>
