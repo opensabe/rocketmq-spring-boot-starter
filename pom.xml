@@ -25,7 +25,7 @@
         <version>18</version>
     </parent>
     
-    <groupId>com.github.opensabe</groupId>
+    <groupId>io.github.opensabe-tech</groupId>
     <artifactId>rocketmq-spring-all</artifactId>
     <version>2.2.4-SNAPSHOT</version>
     <packaging>pom</packaging>
