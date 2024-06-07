@@ -27,7 +27,7 @@
     
     <groupId>io.github.opensabe-tech</groupId>
     <artifactId>rocketmq-spring-all</artifactId>
-    <version>2.2.4-SNAPSHOT</version>
+    <version>2.2.4</version>
     <packaging>pom</packaging>
 
     <name>Apache RocketMQ Spring Boot ${project.version}</name>
@@ -43,18 +43,18 @@
     </scm>
 
     <!-- 打包上传二进制文件到仓库配置 -->
-    <distributionManagement>
-        <repository>
-            <id>matchplay-releases</id>
-            <name>Team Nexus Repository releases</name>
-            <url>https://maven.matchplay.com/repository/maven-releases/</url>
-        </repository>
-        <snapshotRepository>
-            <id>matchplay-snapshots</id>
-            <name>Team Nexus Repository snapshots</name>
-            <url>https://maven.matchplay.com/repository/maven-snapshots/</url>
-        </snapshotRepository>
-    </distributionManagement>
+<!--    <distributionManagement>-->
+<!--        <repository>-->
+<!--            <id>matchplay-releases</id>-->
+<!--            <name>Team Nexus Repository releases</name>-->
+<!--            <url>https://maven.matchplay.com/repository/maven-releases/</url>-->
+<!--        </repository>-->
+<!--        <snapshotRepository>-->
+<!--            <id>matchplay-snapshots</id>-->
+<!--            <name>Team Nexus Repository snapshots</name>-->
+<!--            <url>https://maven.matchplay.com/repository/maven-snapshots/</url>-->
+<!--        </snapshotRepository>-->
+<!--    </distributionManagement>-->
 
     <mailingLists>
         <mailingList>
@@ -134,6 +134,7 @@
                 </executions>
            </plugin>
            <plugin>
+               <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-surefire-plugin</artifactId>
                 <version>2.19.1</version>
                 <configuration>
@@ -182,6 +183,66 @@
                 <artifactId>coveralls-maven-plugin</artifactId>
                 <version>4.3.0</version>
             </plugin>
+
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-javadoc-plugin</artifactId>
+                <version>3.4.1</version>
+                <executions>
+                    <execution>
+                        <id>attach-javadocs</id>
+                        <goals>
+                            <goal>jar</goal>
+                        </goals>
+                    </execution>
+                </executions>
+                <configuration>
+                    <level>public</level>
+                    <doclint>none</doclint>
+                    <quiet>true</quiet>
+                </configuration>
+            </plugin>
+
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-source-plugin</artifactId>
+                <version>3.2.1</version>
+                <executions>
+                    <execution>
+                        <id>attach-sources</id>
+                        <goals>
+                            <goal>jar</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
+
+            <!-- 使用GPG加密 -->
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-gpg-plugin</artifactId>
+                <version>1.6</version>
+                <executions>
+                    <execution>
+                        <id>ossrh</id>
+                        <phase>verify</phase>
+                        <goals>
+                            <goal>sign</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
+            <!-- 使用 Maven 插件发布 -->
+            <plugin>
+                <groupId>org.sonatype.central</groupId>
+                <artifactId>central-publishing-maven-plugin</artifactId>
+                <version>0.4.0</version>
+                <extensions>true</extensions>
+                <configuration>
+                    <publishingServerId>central</publishingServerId>
+                    <tokenAuth>true</tokenAuth>
+                </configuration>
+            </plugin>
         </plugins>
         
         <pluginManagement>
@@ -212,4 +273,22 @@
                 <module>rocketmq-spring-boot-samples</module>
         -->
     </modules>
+
+    <!--项目开发者列表-->
+    <developers>
+        <developer>
+            <!--SCM里项目开发者的唯一标识符-->
+            <id>opensabe</id>
+            <!--项目开发者的全名-->
+            <name>opensabe-tech</name>
+            <!--项目开发者的email-->
+            <email>tech@sabegeek.com</email>
+            <roles>
+                <role>Project Manager</role>
+                <role>Developer</role>
+            </roles>
+            <!--项目开发者所在时区， -11到12范围内的整数。-->
+            <timezone>+8</timezone>
+        </developer>
+    </developers>
 </project>
