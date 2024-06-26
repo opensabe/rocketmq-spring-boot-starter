@@ -39,7 +39,7 @@
         <spring.boot.version>2.5.9</spring.boot.version>
         <spring.version>5.3.27</spring.version>
 
-        <rocketmq.spring.boot.version>2.2.4-SNAPSHOT</rocketmq.spring.boot.version>
+        <rocketmq.spring.boot.version>2.2.4</rocketmq.spring.boot.version>
 
         <rocketmq.version>5.1.0</rocketmq.version>
         <slf4j.version>1.7.25</slf4j.version>
@@ -106,7 +106,7 @@
             </dependency>
 
             <dependency>
-                <groupId>org.apache.rocketmq</groupId>
+                <groupId>io.github.opensabe-tech</groupId>
                 <artifactId>rocketmq-spring-boot</artifactId>
                 <version>${rocketmq.spring.boot.version}</version>
             </dependency>

@@ -21,7 +21,7 @@
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
 
-    <groupId>org.apache.rocketmq</groupId>
+    <groupId>io.github.opensabe-tech</groupId>
     <artifactId>rocketmq-spring-boot-samples</artifactId>
     <packaging>pom</packaging>
     <version>2.2.3</version>
@@ -40,12 +40,12 @@
     <properties>
         <maven.compiler.source>1.8</maven.compiler.source>
         <maven.compiler.target>1.8</maven.compiler.target>
-        <rocketmq-spring-boot-starter-version>2.2.3-SNAPSHOT</rocketmq-spring-boot-starter-version>
+        <rocketmq-spring-boot-starter-version>2.2.4</rocketmq-spring-boot-starter-version>
     </properties>
 
     <dependencies>
         <dependency>
-            <groupId>org.apache.rocketmq</groupId>
+            <groupId>io.github.opensabe-tech</groupId>
             <artifactId>rocketmq-spring-boot-starter</artifactId>
             <version>${rocketmq-spring-boot-starter-version}</version>
         </dependency>
