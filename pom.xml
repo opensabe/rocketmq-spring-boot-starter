@@ -42,20 +42,6 @@
         <tag>HEAD</tag>
     </scm>
 
-    <!-- 打包上传二进制文件到仓库配置 -->
-<!--    <distributionManagement>-->
-<!--        <repository>-->
-<!--            <id>matchplay-releases</id>-->
-<!--            <name>Team Nexus Repository releases</name>-->
-<!--            <url>https://maven.matchplay.com/repository/maven-releases/</url>-->
-<!--        </repository>-->
-<!--        <snapshotRepository>-->
-<!--            <id>matchplay-snapshots</id>-->
-<!--            <name>Team Nexus Repository snapshots</name>-->
-<!--            <url>https://maven.matchplay.com/repository/maven-snapshots/</url>-->
-<!--        </snapshotRepository>-->
-<!--    </distributionManagement>-->
-
     <mailingLists>
         <mailingList>
             <name>Development List</name>
@@ -217,30 +203,24 @@
                 </executions>
             </plugin>
 
-            <!-- 使用GPG加密 -->
+            <!-- 工程文件自动签名-->
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-gpg-plugin</artifactId>
-                <version>1.6</version>
                 <executions>
                     <execution>
-                        <id>ossrh</id>
+                        <id>sign-artifacts</id>
                         <phase>verify</phase>
                         <goals>
                             <goal>sign</goal>
                         </goals>
                     </execution>
                 </executions>
-            </plugin>
-            <!-- 使用 Maven 插件发布 -->
-            <plugin>
-                <groupId>org.sonatype.central</groupId>
-                <artifactId>central-publishing-maven-plugin</artifactId>
-                <version>0.4.0</version>
-                <extensions>true</extensions>
                 <configuration>
-                    <publishingServerId>central</publishingServerId>
-                    <tokenAuth>true</tokenAuth>
+                    <gpgArguments>
+                        <argument>--pinentry-mode</argument>
+                        <argument>loopback</argument>
+                    </gpgArguments>
                 </configuration>
             </plugin>
         </plugins>
@@ -254,6 +234,17 @@
             </plugins>
         </pluginManagement>
     </build>
+
+    <distributionManagement>
+        <snapshotRepository>
+            <id>ossrh</id>
+            <url>https://oss.sonatype.org/content/repositories/snapshots/</url>
+        </snapshotRepository>
+        <repository>
+            <id>ossrh</id>
+            <url>https://oss.sonatype.org/service/local/staging/deploy/maven2/</url>
+        </repository>
+    </distributionManagement>
 
     <profiles>
         <profile>
