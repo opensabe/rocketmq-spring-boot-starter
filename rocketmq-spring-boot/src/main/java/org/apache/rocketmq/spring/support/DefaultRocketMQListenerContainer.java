@@ -137,6 +137,7 @@ public class DefaultRocketMQListenerContainer implements InitializingBean,
     private int replyTimeout;
     private String tlsEnable;
     private String namespace;
+    private String namespaceV2;
     private long awaitTerminationMillisWhenShutdown;
 
     private String instanceName;
@@ -268,6 +269,7 @@ public class DefaultRocketMQListenerContainer implements InitializingBean,
         this.replyTimeout = anno.replyTimeout();
         this.tlsEnable = anno.tlsEnable();
         this.namespace = anno.namespace();
+        this.namespaceV2 = anno.namespaceV2();
         this.delayLevelWhenNextConsume = anno.delayLevelWhenNextConsume();
         this.suspendCurrentQueueTimeMillis = anno.suspendCurrentQueueTimeMillis();
         this.awaitTerminationMillisWhenShutdown = Math.max(0, anno.awaitTerminationMillisWhenShutdown());
@@ -308,6 +310,14 @@ public class DefaultRocketMQListenerContainer implements InitializingBean,
 
     public void setNamespace(String namespace) {
         this.namespace = namespace;
+    }
+
+    public String getNamespaceV2() {
+        return namespaceV2;
+    }
+
+    public void setNamespaceV2(String namespaceV2) {
+        this.namespaceV2 = namespaceV2;
     }
 
     public DefaultMQPushConsumer getConsumer() {
@@ -416,6 +426,7 @@ public class DefaultRocketMQListenerContainer implements InitializingBean,
         return "DefaultRocketMQListenerContainer{" +
             "consumerGroup='" + consumerGroup + '\'' +
             ", namespace='" + namespace + '\'' +
+            ", namespaceV2='" + namespaceV2 + '\'' +
             ", nameServer='" + nameServer + '\'' +
             ", topic='" + topic + '\'' +
             ", consumeMode=" + consumeMode +
@@ -477,7 +488,7 @@ public class DefaultRocketMQListenerContainer implements InitializingBean,
         }
     }
 
-    private void handleMessage(
+    public void handleMessage(
         MessageExt messageExt) throws MQClientException, RemotingException, InterruptedException {
         if (rocketMQListener != null) {
             rocketMQListener.onMessage(doConvertMessage(messageExt));
@@ -653,6 +664,7 @@ public class DefaultRocketMQListenerContainer implements InitializingBean,
                     resolveRequiredPlaceholders(this.rocketMQMessageListener.customizedTraceTopic()));
         }
         consumer.setNamespace(namespace);
+        consumer.setNamespaceV2(namespaceV2);
 
         String customizedNameServer = this.applicationContext.getEnvironment().resolveRequiredPlaceholders(this.rocketMQMessageListener.nameServer());
         if (customizedNameServer != null) {
